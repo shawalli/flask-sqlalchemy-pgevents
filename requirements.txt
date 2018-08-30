@@ -1,0 +1,3 @@
+psycopg2==2.7.5
+git+git://github.com/shawalli/psycopg2-pgevents.git#egg=psycopg2-pgevents
+SQLAlchemy==1.2.10
