@@ -1,67 +1,63 @@
+
+__all__ = ['PGEvents']
+
 from collections import defaultdict, namedtuple
 from typing import Callable, List, NamedTuple
 import atexit
 
-from huey.contrib.minimal import MiniHuey
 from psycopg2_pgevents import install_trigger, install_trigger_function, poll
 
 
 class Trigger(NamedTuple):
     target: Callable
-    events: List = list()
     fn: Callable
+    events: List = list()
     installed: bool = False
 
 
 class PGEvents:
     def __init__(self, app=None):
-        self.__app = None
-        self.__connection = None
-        self.__psycopg2_handle = None
-        self.__triggers = dict()
-        self.__initialized = False
+        self._app = None
+        self._connection = None
+        self._psycopg2_handle = None
+        self._triggers = dict()
+        self._initialized = False
 
         if app is not None:
             self.init_app(app)
 
     def init_app(self, app):
-        self.__app = app
-
-        if not hasattr(app, 'extensions'):
-            app.extensions = {}
+        self._app = app
 
         if 'sqlalchemy' not in app.extensions:
             raise RuntimeError(
                 'This extension must be initialized after Flask-SQLAlchemy')
 
-        self.__setup_conection()
+        self._setup_conection()
 
-        install_trigger_function(self.__psycopg2_handle)
+        install_trigger_function(self._psycopg2_handle)
 
         # Install any deferred triggers
-        for trigger in self.__triggers.values():
+        for trigger in self._triggers.values():
             if not trigger.installed:
-                self.__install_trigger_for_model(trigger.target)
+                self._install_trigger_for_model(trigger.target)
                 trigger.installed = True
-
-        # TODO: setup Huey
-        self.__scheduler = MiniHuey()
 
         app.extensions['pgevents'] = self
 
-        self.__initialized = True
+        self._initialized = True
 
     def listen(self, target, identifier, fn):
         installed = False
         events = identifier.split('|')
 
-        if self.__initialized:
-            self.__install_trigger_for_model(target)
+        if self._initialized:
+            self._install_trigger_for_model(target)
             installed = True
 
-        trigger_name = self.__get_full_table_name(target)
+        trigger_name = self._get_full_table_name(target)
 
-        self.__triggers[trigger_name] = Trigger(target, events, fn, installed)
+        self._triggers[trigger_name] = Trigger(target, events, fn, installed)
 
     def listens_for(self, target, identifier):
         def decorate(fn):
@@ -69,51 +65,51 @@ class PGEvents:
             return fn
         return decorate
 
-    def __setup_conection(self):
-        with self.__app.app_context():
-            db = self.__app.extensions.get('sqlalchemy', None)
-            self.__connection = db.engine.connect()
-            self.__psycopg2_handle = self.__connection.connection
+    def _setup_conection(self):
+        with self._app.app_context():
+            flask_sqlalchemy = self._app.extensions['sqlalchemy']
+            self._connection = flask_sqlalchemy.db.engine.connect()
+            self._psycopg2_handle = self._connection.connection
 
-        atexit.register(self.__teardown_connection)
+        atexit.register(self._teardown_connection)
 
-    def __teardown_connection(self):
-        if self.__connection is not None:
-            with self.__app.app_context:
-                self.__connection.close()
-                self.__psycopg2_handle = None
-                self.__connection = None
+    def _teardown_connection(self):
+        if self._connection is not None:
+            with self._app.app_context():
+                self._psycopg2_handle = None
+                self._connection.close()
+                self._connection = None
 
     @staticmethod
-    def __get_full_table_name(model):
+    def _get_full_table_name(model):
         table_args = getattr(model, '__table_args__', {})
         schema_name = table_args.get('schema', 'public')
         table_name = model.__tablename__
 
         return '{}.{}'.format(schema_name, table_name)
 
-    def __install_trigger_for_model(self, model):
-        table = self.__get_full_table_name(model)
+    def _install_trigger_for_model(self, model):
+        table = self._get_full_table_name(model)
         (schema_name, table_name) = table.split('.')
 
-        install_trigger(self.__psycopg2_handle, table_name, schema=schema_name)
+        install_trigger(self._psycopg2_handle, table_name, schema=schema_name)
 
 # TODO:???
 
 
-def notify(self):
-    if not self.__initialized:
-        raise RuntimeError('Extension not initialized.')
+# def notify(self):
+#     if not self._initialized:
+#         raise RuntimeError('Extension not initialized.')
 
-    for notification in poll(self.__psycopg2_handle):
-        table = '{}.{}'.format(notification['schema_name'], notification['table_name'])
+#     for notification in poll(self._psycopg2_handle):
+#         table = '{}.{}'.format(notification['schema_name'], notification['table_name'])
 
-        trigger = self.__triggers.get(table, None)
-        if trigger is None:
-            continue
+#         trigger = self._triggers.get(table, None)
+#         if trigger is None:
+#             continue
 
-        if notification['event'].lower() not in trigger.events:
-            continue
+#         if notification['event'].lower() not in trigger.events:
+#             continue
 
-        fn = notification['fn']
-        fn(notification['id'], notification['event'])
+#         fn = notification['fn']
+#         fn(notification['id'], notification['event'])
