@@ -22,7 +22,6 @@ class PGEvents:
     def __init__(self, app=None):
         self._app = None
         self._connection = None
-        self._psycopg2_handle = None
         self._psycopg2_connection = None
         self._triggers = defaultdict(list)
         self._initialized = False
@@ -78,7 +77,6 @@ class PGEvents:
             self._connection = flask_sqlalchemy.db.engine.connect()
             connection_proxy = self._connection.connection
             self._psycopg2_connection = connection_proxy.connection
-            self._psycopg2_handle = self._psycopg2_connection
 
         atexit.register(self._teardown_connection)
 
@@ -86,7 +84,6 @@ class PGEvents:
         if self._connection is not None:
             with self._app.app_context():
                 self._psycopg2_connection = None
-                self._psycopg2_handle = None
                 self._connection.close()
                 self._connection = None
 
