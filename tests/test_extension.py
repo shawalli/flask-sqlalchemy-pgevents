@@ -102,3 +102,63 @@ class TestExtension:
 
                 trigger_installed_ = trigger_installed(conn, 'animal')
                 assert (trigger_installed_ == True)
+
+    def test_listen_invalid_identifier(self, app, db):
+        class Animal(db.Model):
+            __tablename__ = 'animal'
+            id = db.Column(db.Integer, primary_key=True)
+
+        create_all(db)
+
+        def event_handler(record_id, identifier):
+            pass
+        with create_pgevents(app) as pg:
+            with raises(ValueError):
+                pg.listen(Animal, ['insert', 'upsert'], event_handler)
+
+            assert ('public.animal' not in pg._triggers)
+
+    def test_not_initialized_listen(self, app, db):
+        class Animal(db.Model):
+            __tablename__ = 'animal'
+            id = db.Column(db.Integer, primary_key=True)
+
+        create_all(db)
+
+        def event_handler(record_id, identifier):
+            pass
+
+        with create_pgevents() as pg:
+            pg.listen(Animal, ['insert'], event_handler)
+
+            assert ('public.animal' in pg._triggers)
+            trigger = pg._triggers['public.animal'][0]
+            assert (trigger.installed == False)
+
+            with create_connection(db, raw=True) as conn:
+                trigger_installed_ = trigger_installed(conn, 'animal')
+                assert (trigger_installed_ == False)
+
+    def test_listen(self, app, db):
+        class Animal(db.Model):
+            __tablename__ = 'animal'
+            id = db.Column(db.Integer, primary_key=True)
+
+        create_all(db)
+
+        def event_handler(record_id, identifier):
+            pass
+
+        with create_pgevents(app) as pg:
+            pg.listen(Animal, ['insert'], event_handler)
+
+            assert ('public.animal' in pg._triggers)
+            trigger = pg._triggers['public.animal'][0]
+            assert (trigger.installed == True)
+            assert (trigger.target == Animal)
+            assert (trigger.events[0] == 'insert')
+            assert (trigger.fn == event_handler)
+
+            with create_connection(db, raw=True) as conn:
+                trigger_installed_ = trigger_installed(conn, 'animal')
+                assert (trigger_installed_ == True)
