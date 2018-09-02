@@ -23,6 +23,7 @@ class PGEvents:
         self._app = None
         self._connection = None
         self._psycopg2_handle = None
+        self._psycopg2_connection = None
         self._triggers = defaultdict(list)
         self._initialized = False
 
@@ -38,7 +39,7 @@ class PGEvents:
 
         self._setup_conection()
 
-        install_trigger_function(self._psycopg2_handle)
+        install_trigger_function(self._psycopg2_connection)
 
         # Install any deferred triggers
         for trigger in self._triggers.values():
@@ -75,13 +76,16 @@ class PGEvents:
         with self._app.app_context():
             flask_sqlalchemy = self._app.extensions['sqlalchemy']
             self._connection = flask_sqlalchemy.db.engine.connect()
-            self._psycopg2_handle = self._connection.connection
+            connection_proxy = self._connection.connection
+            self._psycopg2_connection = connection_proxy.connection
+            self._psycopg2_handle = self._psycopg2_connection
 
         atexit.register(self._teardown_connection)
 
     def _teardown_connection(self):
         if self._connection is not None:
             with self._app.app_context():
+                self._psycopg2_connection = None
                 self._psycopg2_handle = None
                 self._connection.close()
                 self._connection = None
@@ -98,7 +102,7 @@ class PGEvents:
         table = self._get_full_table_name(model)
         (schema_name, table_name) = table.split('.')
 
-        install_trigger(self._psycopg2_handle, table_name, schema=schema_name)
+        install_trigger(self._psycopg2_connection, table_name, schema=schema_name)
 
 # TODO:???
 
@@ -107,7 +111,7 @@ class PGEvents:
 #     if not self._initialized:
 #         raise RuntimeError('Extension not initialized.')
 
-#     for notification in poll(self._psycopg2_handle):
+#     for notification in poll(self._psycopg2_connection):
 #         table = '{}.{}'.format(notification['schema_name'], notification['table_name'])
 
 #         triggers = self._triggers.get(table, [])
