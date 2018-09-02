@@ -8,6 +8,9 @@ import atexit
 from psycopg2_pgevents import install_trigger, install_trigger_function, poll
 
 
+IDENTIFIERS = set(('insert', 'update', 'delete'))
+
+
 class Trigger(NamedTuple):
     target: Callable
     fn: Callable
@@ -20,7 +23,7 @@ class PGEvents:
         self._app = None
         self._connection = None
         self._psycopg2_handle = None
-        self._triggers = dict()
+        self._triggers = defaultdict(list)
         self._initialized = False
 
         if app is not None:
@@ -47,9 +50,12 @@ class PGEvents:
 
         self._initialized = True
 
-    def listen(self, target, identifier, fn):
+    def listen(self, target, identifiers, fn):
         installed = False
-        events = identifier.split('|')
+
+        invalid_identifiers = set(identifiers).difference(IDENTIFIERS)
+        if invalid_identifiers:
+            raise ValueError('Invalid identifiers: {}'.format(list(invalid_identifiers)))
 
         if self._initialized:
             self._install_trigger_for_model(target)
@@ -57,11 +63,11 @@ class PGEvents:
 
         trigger_name = self._get_full_table_name(target)
 
-        self._triggers[trigger_name] = Trigger(target, events, fn, installed)
+        self._triggers[trigger_name].append(Trigger(target, fn, identifiers, installed))
 
-    def listens_for(self, target, identifier):
+    def listens_for(self, target, identifiers):
         def decorate(fn):
-            self.listen(target, identifier, fn)
+            self.listen(target, identifiers, fn)
             return fn
         return decorate
 
@@ -104,12 +110,13 @@ class PGEvents:
 #     for notification in poll(self._psycopg2_handle):
 #         table = '{}.{}'.format(notification['schema_name'], notification['table_name'])
 
-#         trigger = self._triggers.get(table, None)
-#         if trigger is None:
+#         triggers = self._triggers.get(table, [])
+#         if not triggers:
 #             continue
 
-#         if notification['event'].lower() not in trigger.events:
-#             continue
+#         for trigger in triggers:
+#             if notification['event'].lower() not in trigger.events:
+#                 continue
 
 #         fn = notification['fn']
 #         fn(notification['id'], notification['event'])
