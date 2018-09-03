@@ -148,8 +148,12 @@ class TestExtension:
             pg.listen(Widget, ['insert'], event_handler)
 
             assert ('public.widget' in pg._triggers)
+            assert (len(pg._triggers['public.widget']) == 1)
             trigger = pg._triggers['public.widget'][0]
             assert (trigger.installed == False)
+            assert (trigger.target == Widget)
+            assert (trigger.events == {'insert'})
+            assert (trigger.fn == event_handler)
 
             with create_connection(db, raw=True) as conn:
                 trigger_installed_ = trigger_installed(conn, 'widget')
@@ -266,6 +270,66 @@ class TestExtension:
                 trigger_installed_ = trigger_installed(conn, 'gadget', schema='private')
                 assert (trigger_installed_ == True)
 
+    def test_listen_mixed(self, app, db):
+        class Widget(db.Model):
+            __tablename__ = 'widget'
+            id = db.Column(db.Integer, primary_key=True)
+
+        db.session.execute(CreateSchema('private'))
+        db.session.commit()
+
+        class Gadget(db.Model):
+            __tablename__ = 'gadget'
+            __table_args__ = {'schema': 'private'}
+            id = db.Column(db.Integer, primary_key=True)
+
+        create_all(db)
+
+        def widget_event_handler(record_id, identifier):
+            pass
+
+        def gadget_event_handler(record_id, identifier):
+            pass
+
+        with create_pgevents() as pg:
+            pg.listen(Widget, ['insert'], widget_event_handler)
+
+            assert ('public.widget' in pg._triggers)
+            assert (len(pg._triggers['public.widget']) == 1)
+
+            widget_trigger = pg._triggers['public.widget'][0]
+            assert (widget_trigger.installed == False)
+            assert (widget_trigger.target == Widget)
+            assert (widget_trigger.events == {'insert'})
+            assert (widget_trigger.fn == widget_event_handler)
+
+            with create_connection(db, raw=True) as conn:
+                trigger_installed_ = trigger_installed(conn, 'widget')
+                assert (trigger_installed_ == False)
+
+            pg.init_app(app)
+
+            assert (widget_trigger.installed == True)
+
+            with create_connection(db, raw=True) as conn:
+                trigger_installed_ = trigger_installed(conn, 'widget')
+                assert (trigger_installed_ == True)
+
+            pg.listen(Gadget, ['delete'], gadget_event_handler)
+
+            assert ('private.gadget' in pg._triggers)
+            assert (len(pg._triggers['private.gadget']) == 1)
+
+            trigger = pg._triggers['private.gadget'][0]
+            assert (trigger.installed == True)
+            assert (trigger.target == Gadget)
+            assert (trigger.events == {'delete'})
+            assert (trigger.fn == gadget_event_handler)
+
+            with create_connection(db, raw=True) as conn:
+                trigger_installed_ = trigger_installed(conn, 'gadget', schema='private')
+                assert (trigger_installed_ == True)
+
     def test_init_app_deferred_trigger(self, app, db):
         class Widget(db.Model):
             __tablename__ = 'widget'
@@ -297,4 +361,117 @@ class TestExtension:
 
             with create_connection(db, raw=True) as conn:
                 trigger_installed_ = trigger_installed(conn, 'widget')
+                assert (trigger_installed_ == True)
+
+    def test_not_initialized_listens_for(self, app, db):
+        with create_pgevents() as pg:
+            class Widget(db.Model):
+                __tablename__ = 'widget'
+                id = db.Column(db.Integer, primary_key=True)
+
+            create_all(db)
+
+            @pg.listens_for(Widget, ['insert'])
+            def event_handler(record_id, identifier):
+                pass
+
+            assert ('public.widget' in pg._triggers)
+            assert (len(pg._triggers['public.widget']) == 1)
+            trigger = pg._triggers['public.widget'][0]
+            assert (trigger.installed == False)
+            assert (trigger.target == Widget)
+            assert (trigger.events == {'insert'})
+            assert (trigger.fn == event_handler)
+
+            with create_connection(db, raw=True) as conn:
+                trigger_installed_ = trigger_installed(conn, 'widget')
+                assert (trigger_installed_ == False)
+
+            pg.init_app(app)
+
+            assert (trigger.installed == True)
+
+            with create_connection(db, raw=True) as conn:
+                trigger_installed_ = trigger_installed(conn, 'widget')
+                assert (trigger_installed_ == True)
+
+    def test_listens_for(self, app, db):
+        with create_pgevents(app) as pg:
+            class Widget(db.Model):
+                __tablename__ = 'widget'
+                id = db.Column(db.Integer, primary_key=True)
+
+            create_all(db)
+
+            @pg.listens_for(Widget, ['insert'])
+            def event_handler(record_id, identifier):
+                pass
+
+            assert ('public.widget' in pg._triggers)
+            assert (len(pg._triggers['public.widget']) == 1)
+            trigger = pg._triggers['public.widget'][0]
+            assert (trigger.installed == True)
+            assert (trigger.target == Widget)
+            assert (trigger.events == {'insert'})
+            assert (trigger.fn == event_handler)
+
+            with create_connection(db, raw=True) as conn:
+                trigger_installed_ = trigger_installed(conn, 'widget')
+                assert (trigger_installed_ == True)
+
+    def test_listens_for_mixed(self, app, db):
+        with create_pgevents() as pg:
+            class Widget(db.Model):
+                __tablename__ = 'widget'
+                id = db.Column(db.Integer, primary_key=True)
+
+            db.session.execute(CreateSchema('private'))
+            db.session.commit()
+
+            class Gadget(db.Model):
+                __tablename__ = 'gadget'
+                __table_args__ = {'schema': 'private'}
+                id = db.Column(db.Integer, primary_key=True)
+
+            create_all(db)
+
+            @pg.listens_for(Widget, ['insert'])
+            def widget_event_handler(record_id, identifier):
+                pass
+
+            assert ('public.widget' in pg._triggers)
+            assert (len(pg._triggers['public.widget']) == 1)
+            trigger = pg._triggers['public.widget'][0]
+            assert (trigger.installed == False)
+            assert (trigger.target == Widget)
+            assert (trigger.events == {'insert'})
+            assert (trigger.fn == widget_event_handler)
+
+            with create_connection(db, raw=True) as conn:
+                trigger_installed_ = trigger_installed(conn, 'widget')
+                assert (trigger_installed_ == False)
+
+            pg.init_app(app)
+
+            assert (trigger.installed == True)
+
+            with create_connection(db, raw=True) as conn:
+                trigger_installed_ = trigger_installed(conn, 'widget')
+                assert (trigger_installed_ == True)
+
+            @pg.listens_for(Gadget, ['delete'])
+            def gadget_event_handler(record_id, identifier):
+                pass
+
+            assert ('private.gadget' in pg._triggers)
+            assert (len(pg._triggers['private.gadget']) == 1)
+
+            trigger = pg._triggers['private.gadget'][0]
+            assert (trigger.installed == True)
+            assert (trigger.target == Gadget)
+            assert (trigger.events == {'delete'})
+            assert (trigger.fn == gadget_event_handler)
+
+            with create_connection(db, raw=True) as conn:
+                trigger_installed_ = trigger_installed(conn, 'gadget', schema='private')
                 assert (trigger_installed_ == True)
