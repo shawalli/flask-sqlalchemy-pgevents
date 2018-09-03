@@ -1,20 +1,20 @@
-
 __all__ = ['PGEvents']
 
 from collections import defaultdict, namedtuple
-from typing import Callable, List, NamedTuple
+from typing import Callable, List, Set
 import atexit
 
 from psycopg2_pgevents import install_trigger, install_trigger_function, poll
-
+import attr
 
 IDENTIFIERS = set(('insert', 'update', 'delete'))
 
 
-class Trigger(NamedTuple):
+@attr.s(auto_attribs=True)
+class Trigger:
     target: Callable
     fn: Callable
-    events: List = set()
+    events: Set = set()
     installed: bool = False
 
 
