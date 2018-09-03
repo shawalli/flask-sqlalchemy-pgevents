@@ -41,10 +41,11 @@ class PGEvents:
         install_trigger_function(self._psycopg2_connection)
 
         # Install any deferred triggers
-        for trigger in self._triggers.values():
-            if not trigger.installed:
-                self._install_trigger_for_model(trigger.target)
-                trigger.installed = True
+        for table_triggers in self._triggers.values():
+            for trigger in table_triggers:
+                if not trigger.installed:
+                    self._install_trigger_for_model(trigger.target)
+                    trigger.installed = True
 
         app.extensions['pgevents'] = self
 

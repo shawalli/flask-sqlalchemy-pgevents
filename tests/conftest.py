@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from pytest import fixture
 from sqlalchemy import MetaData
+from sqlalchemy.sql import compiler
 
 
 class Config:
@@ -37,3 +38,27 @@ def db(app):
     meta.drop_all()
 
     return db_
+
+
+def patched_visit_create_schema(self_, create):
+    """Add IF NOT EXISTS modifier to 'CREATE SCHEMA' DDL.
+
+    Parameters
+    ----------
+    create: sqlalchemy.schema.CreateSchema
+        CreateSchema instance
+
+    Returns
+    -------
+    str
+        DDL statement
+    """
+    schema = self_.preparer.format_schema(create.element)
+    return "CREATE SCHEMA IF NOT EXISTS " + schema
+
+
+# THis method must be monkey-patched since SQLAlchemy does not natively support
+# IF EXISTS/IF NOT EXISTS modifers on DDL (as of 1.2.11). Since some tests test
+# against non-default schema, and schema are not dropped as part of drop_all(),
+# this monkey-patch allows for existing schema with the same name.
+compiler.DDLCompiler.visit_create_schema = patched_visit_create_schema
