@@ -103,6 +103,21 @@ class TestExtension:
                 trigger_installed_ = trigger_installed(conn, 'animal')
                 assert (trigger_installed_ == True)
 
+    def test_listen_no_identifier(self, app, db):
+        class Animal(db.Model):
+            __tablename__ = 'animal'
+            id = db.Column(db.Integer, primary_key=True)
+
+        create_all(db)
+
+        def event_handler(record_id, identifier):
+            pass
+        with create_pgevents(app) as pg:
+            with raises(ValueError):
+                pg.listen(Animal, [], event_handler)
+
+            assert ('public.animal' not in pg._triggers)
+
     def test_listen_invalid_identifier(self, app, db):
         class Animal(db.Model):
             __tablename__ = 'animal'
@@ -153,11 +168,48 @@ class TestExtension:
             pg.listen(Animal, ['insert'], event_handler)
 
             assert ('public.animal' in pg._triggers)
+            assert (len(pg._triggers['public.animal']) == 1)
             trigger = pg._triggers['public.animal'][0]
             assert (trigger.installed == True)
             assert (trigger.target == Animal)
-            assert (trigger.events[0] == 'insert')
+            assert (trigger.events == {'insert'})
             assert (trigger.fn == event_handler)
+
+            with create_connection(db, raw=True) as conn:
+                trigger_installed_ = trigger_installed(conn, 'animal')
+                assert (trigger_installed_ == True)
+
+    def test_listen_one_model_multiple_triggers(self, app, db):
+        class Animal(db.Model):
+            __tablename__ = 'animal'
+            id = db.Column(db.Integer, primary_key=True)
+
+        create_all(db)
+
+        def event_handler1(record_id, identifier):
+            pass
+
+        def event_handler2(record_id, identifier):
+            pass
+
+        with create_pgevents(app) as pg:
+            pg.listen(Animal, ['insert', 'update'], event_handler1)
+            pg.listen(Animal, ['delete'], event_handler2)
+
+            assert ('public.animal' in pg._triggers)
+            assert (len(pg._triggers['public.animal']) == 2)
+
+            trigger = pg._triggers['public.animal'][0]
+            assert (trigger.installed == True)
+            assert (trigger.target == Animal)
+            assert (trigger.events == {'insert', 'update'})
+            assert (trigger.fn == event_handler1)
+
+            trigger = pg._triggers['public.animal'][1]
+            assert (trigger.installed == True)
+            assert (trigger.target == Animal)
+            assert (trigger.events == {'delete'})
+            assert (trigger.fn == event_handler2)
 
             with create_connection(db, raw=True) as conn:
                 trigger_installed_ = trigger_installed(conn, 'animal')

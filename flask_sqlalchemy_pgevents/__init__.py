@@ -14,7 +14,7 @@ IDENTIFIERS = set(('insert', 'update', 'delete'))
 class Trigger(NamedTuple):
     target: Callable
     fn: Callable
-    events: List = list()
+    events: List = set()
     installed: bool = False
 
 
@@ -52,8 +52,12 @@ class PGEvents:
 
     def listen(self, target, identifiers, fn):
         installed = False
+        identifiers = set(identifiers)
 
-        invalid_identifiers = set(identifiers).difference(IDENTIFIERS)
+        if not identifiers:
+            raise ValueError('At least one identifier must be provided')
+
+        invalid_identifiers = identifiers.difference(IDENTIFIERS)
         if invalid_identifiers:
             raise ValueError('Invalid identifiers: {}'.format(list(invalid_identifiers)))
 
@@ -93,7 +97,7 @@ class PGEvents:
         schema_name = table_args.get('schema', 'public')
         table_name = model.__tablename__
 
-        return '{}.{}'.format(schema_name, table_name)
+        return '{schema}.{table}'.format(schema=schema_name, table=table_name)
 
     def _install_trigger_for_model(self, model):
         table = self._get_full_table_name(model)
