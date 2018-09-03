@@ -1,10 +1,7 @@
-
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from psycopg2_pgevents import uninstall_trigger_function
 from pytest import fixture
-
-from helpers.db import create_connection
+from sqlalchemy import MetaData
 
 
 class Config:
@@ -35,12 +32,8 @@ def db(app):
     db_.init_app(app)
 
     # Ensure database is empty
-    db_.drop_all()
-
-    with create_connection(db_, raw=True) as conn:
-        # Ensure base pgevents trigger function is removed. By force-uninstalling,
-        # all pgevent triggers (which depend on the base pgevents trigger function)
-        # will be cascade-deleted.
-        uninstall_trigger_function(conn, force=True)
+    meta = MetaData(db_.engine)
+    meta.reflect()
+    meta.drop_all()
 
     return db_
