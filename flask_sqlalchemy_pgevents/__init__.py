@@ -8,7 +8,10 @@ from psycopg2_pgevents import install_trigger, install_trigger_function, poll, r
     unregister_event_channel
 import attr
 
-IDENTIFIERS = set(('insert', 'update', 'delete'))
+from flask_sqlalchemy_pgevents.__about__ import __author__, __copyright__, __email__, __license__, __summary__, \
+    __title__, __uri__, __version__
+
+IDENTIFIERS = {'insert', 'update', 'delete'}
 
 
 @attr.s(auto_attribs=True)
