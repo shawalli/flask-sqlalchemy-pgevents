@@ -1,11 +1,15 @@
 __all__ = ['PGEvents']
 
 from collections import defaultdict, namedtuple
-from typing import Callable, List, Set
+from typing import Callable, List, Optional, Set
 import atexit
 
+from flask import Flask
+from flask_sqlalchemy.model import Model
+from psycopg2.extensions import connection as Psycopg2Connection
 from psycopg2_pgevents import install_trigger, install_trigger_function, poll, register_event_channel, \
     unregister_event_channel
+from sqlalchemy.engine.base import Connection as SQLAlchemyConnection
 import attr
 
 from flask_sqlalchemy_pgevents.__about__ import __author__, __copyright__, __email__, __license__, __summary__, \
@@ -23,17 +27,17 @@ class Trigger:
 
 
 class PGEvents:
-    def __init__(self, app=None):
-        self._app = None
-        self._connection = None
-        self._psycopg2_connection = None
-        self._triggers = defaultdict(list)
-        self._initialized = False
+    def __init__(self, app: Optional[Flask]=None) -> None:
+        self._app = None  # type: Optional[Flask]
+        self._connection = None  # type: Optional[SQLAlchemyConnection]
+        self._psycopg2_connection = None  # type: Optional[Psycopg2Connection]
+        self._triggers = defaultdict(list)  # type: dict
+        self._initialized = False  # type: bool
 
         if app is not None:
             self.init_app(app)
 
-    def init_app(self, app):
+    def init_app(self, app: Flask) -> None:
         self._app = app
 
         if 'sqlalchemy' not in app.extensions:
@@ -59,42 +63,42 @@ class PGEvents:
 
         atexit.register(self.teardown)
 
-    def teardown(self):
+    def teardown(self) -> None:
         if self._initialized:
             unregister_event_channel(self._psycopg2_connection)
 
             self._teardown_connection()
         self._initialized = False
 
-    def _setup_conection(self):
-        with self._app.app_context():
-            flask_sqlalchemy = self._app.extensions['sqlalchemy']
+    def _setup_conection(self) -> None:
+        with self._app.app_context():  # type: ignore
+            flask_sqlalchemy = self._app.extensions['sqlalchemy']  # type: ignore
             self._connection = flask_sqlalchemy.db.engine.connect()
             connection_proxy = self._connection.connection
             self._psycopg2_connection = connection_proxy.connection
 
-    def _teardown_connection(self):
+    def _teardown_connection(self) -> None:
         if self._connection is not None:
-            with self._app.app_context():
+            with self._app.app_context():  # type: ignore
                 self._psycopg2_connection = None
                 self._connection.close()
                 self._connection = None
 
     @staticmethod
-    def _get_full_table_name(model):
+    def _get_full_table_name(model: Model) -> str:
         table_args = getattr(model, '__table_args__', {})
         schema_name = table_args.get('schema', 'public')
         table_name = model.__tablename__
 
         return '{schema}.{table}'.format(schema=schema_name, table=table_name)
 
-    def _install_trigger_for_model(self, model):
+    def _install_trigger_for_model(self, model: Model) -> None:
         table = self._get_full_table_name(model)
         (schema_name, table_name) = table.split('.')
 
         install_trigger(self._psycopg2_connection, table_name, schema=schema_name)
 
-    def listen(self, target, identifiers, fn):
+    def listen(self, target: Model, identifiers: Set, fn: Callable) -> None:
         installed = False
         identifiers = set(identifiers)
 
@@ -113,13 +117,13 @@ class PGEvents:
 
         self._triggers[trigger_name].append(Trigger(target, fn, identifiers, installed))
 
-    def listens_for(self, target, identifiers):
+    def listens_for(self, target: Model, identifiers: Set) -> Callable:
         def decorate(fn):
             self.listen(target, identifiers, fn)
             return fn
         return decorate
 
-    def handle_events(self, timeout=0.0):
+    def handle_events(self, timeout: float=0.0) -> None:
         if not self._initialized:
             raise RuntimeError('Extension not initialized.')
 
