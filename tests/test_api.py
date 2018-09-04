@@ -20,7 +20,7 @@ class TestApi:
             pass
         with create_pgevents(app) as pg:
             with raises(ValueError):
-                pg.listen(Widget, [], callback)
+                pg.listen(Widget, set(), callback)
 
             assert ('public.widget' not in pg._triggers)
 
@@ -35,7 +35,7 @@ class TestApi:
             pass
         with create_pgevents(app) as pg:
             with raises(ValueError):
-                pg.listen(Widget, ['insert', 'upsert'], callback)
+                pg.listen(Widget, {'insert', 'upsert'}, callback)
 
             assert ('public.widget' not in pg._triggers)
 
@@ -50,7 +50,7 @@ class TestApi:
             pass
 
         with create_pgevents() as pg:
-            pg.listen(Widget, ['insert'], callback)
+            pg.listen(Widget, {'insert'}, callback)
 
             assert ('public.widget' in pg._triggers)
             assert (len(pg._triggers['public.widget']) == 1)
@@ -75,7 +75,7 @@ class TestApi:
             pass
 
         with create_pgevents(app) as pg:
-            pg.listen(Widget, ['insert'], callback)
+            pg.listen(Widget, {'insert'}, callback)
 
             assert ('public.widget' in pg._triggers)
             assert (len(pg._triggers['public.widget']) == 1)
@@ -103,8 +103,8 @@ class TestApi:
             pass
 
         with create_pgevents(app) as pg:
-            pg.listen(Widget, ['insert', 'update'], upsert_callback)
-            pg.listen(Widget, ['delete'], delete_callback)
+            pg.listen(Widget, {'insert', 'update'}, upsert_callback)
+            pg.listen(Widget, {'delete'}, delete_callback)
 
             assert ('public.widget' in pg._triggers)
             assert (len(pg._triggers['public.widget']) == 2)
@@ -147,8 +147,8 @@ class TestApi:
             pass
 
         with create_pgevents(app) as pg:
-            pg.listen(Widget, ['insert'], widget_callback)
-            pg.listen(Gadget, ['delete'], gadget_callback)
+            pg.listen(Widget, {'insert'}, widget_callback)
+            pg.listen(Gadget, {'delete'}, gadget_callback)
 
             assert ('public.widget' in pg._triggers)
             assert (len(pg._triggers['public.widget']) == 1)
@@ -197,7 +197,7 @@ class TestApi:
             pass
 
         with create_pgevents() as pg:
-            pg.listen(Widget, ['insert'], widget_callback)
+            pg.listen(Widget, {'insert'}, widget_callback)
 
             assert ('public.widget' in pg._triggers)
             assert (len(pg._triggers['public.widget']) == 1)
@@ -220,7 +220,7 @@ class TestApi:
                 trigger_installed_ = trigger_installed(conn, 'widget')
                 assert (trigger_installed_ == True)
 
-            pg.listen(Gadget, ['delete'], gadget_callback)
+            pg.listen(Gadget, {'delete'}, gadget_callback)
 
             assert ('private.gadget' in pg._triggers)
             assert (len(pg._triggers['private.gadget']) == 1)
@@ -243,7 +243,7 @@ class TestApi:
 
             create_all(db)
 
-            @pg.listens_for(Widget, ['insert'])
+            @pg.listens_for(Widget, {'insert'})
             def callback(record_id, identifier):
                 pass
 
@@ -275,7 +275,7 @@ class TestApi:
 
             create_all(db)
 
-            @pg.listens_for(Widget, ['insert'])
+            @pg.listens_for(Widget, {'insert'})
             def callback(record_id, identifier):
                 pass
 
@@ -307,7 +307,7 @@ class TestApi:
 
             create_all(db)
 
-            @pg.listens_for(Widget, ['insert'])
+            @pg.listens_for(Widget, {'insert'})
             def widget_callback(record_id, identifier):
                 pass
 
@@ -331,7 +331,7 @@ class TestApi:
                 trigger_installed_ = trigger_installed(conn, 'widget')
                 assert (trigger_installed_ == True)
 
-            @pg.listens_for(Gadget, ['delete'])
+            @pg.listens_for(Gadget, {'delete'})
             def gadget_callback(record_id, identifier):
                 pass
 
@@ -363,7 +363,7 @@ class TestApi:
 
             widget_callback_called = 0
 
-            @pg.listens_for(Widget, ['insert'])
+            @pg.listens_for(Widget, {'insert'})
             def widget_callback(record_id, identifier):
                 nonlocal widget_callback_called
                 widget_callback_called += 1
@@ -382,7 +382,7 @@ class TestApi:
 
             widget_callback_called = 0
 
-            @pg.listens_for(Widget, ['insert'])
+            @pg.listens_for(Widget, {'insert'})
             def widget_callback(record_id, identifier):
                 nonlocal widget_callback_called
                 widget_callback_called += 1
@@ -404,7 +404,7 @@ class TestApi:
 
             widget_callback_called = 0
 
-            @pg.listens_for(Widget, ['insert'])
+            @pg.listens_for(Widget, {'insert'})
             def widget_callback(record_id, identifier):
                 nonlocal widget_callback_called
                 widget_callback_called += 1
@@ -430,12 +430,12 @@ class TestApi:
             widget_insert_callback_called = 0
             widget_upsert_callback_called = 0
 
-            @pg.listens_for(Widget, ['insert'])
+            @pg.listens_for(Widget, {'insert'})
             def widget_insert_callback(record_id, identifier):
                 nonlocal widget_insert_callback_called
                 widget_insert_callback_called += 1
 
-            @pg.listens_for(Widget, ['insert', 'update'])
+            @pg.listens_for(Widget, {'insert', 'update'})
             def widget_upsert_callback(record_id, identifier):
                 nonlocal widget_upsert_callback_called
                 widget_upsert_callback_called += 1
@@ -472,12 +472,12 @@ class TestApi:
             widget_callback_called = 0
             gadget_callback_called = 0
 
-            @pg.listens_for(Widget, ['insert'])
+            @pg.listens_for(Widget, {'insert'})
             def widget_callback(record_id, identifier):
                 nonlocal widget_callback_called
                 widget_callback_called += 1
 
-            @pg.listens_for(Gadget, ['insert'])
+            @pg.listens_for(Gadget, {'insert'})
             def gadget_callback(record_id, identifier):
                 nonlocal gadget_callback_called
                 gadget_callback_called += 1

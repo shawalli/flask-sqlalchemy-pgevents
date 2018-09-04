@@ -135,7 +135,7 @@ class TestExtension:
             pass
 
         with create_pgevents() as pg:
-            pg.listen(Widget, ['insert'], callback)
+            pg.listen(Widget, {'insert'}, callback)
 
             assert ('public.widget' in pg._triggers)
             assert (len(pg._triggers['public.widget']) == 1)

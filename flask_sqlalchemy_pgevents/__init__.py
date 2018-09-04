@@ -100,7 +100,6 @@ class PGEvents:
 
     def listen(self, target: Model, identifiers: Set, fn: Callable) -> None:
         installed = False
-        identifiers = set(identifiers)
 
         if not identifiers:
             raise ValueError('At least one identifier must be provided')
