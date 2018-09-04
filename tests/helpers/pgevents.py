@@ -9,4 +9,4 @@ class create_pgevents:
         return self.pgevents
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.pgevents._teardown_connection()
+        self.pgevents.teardown()

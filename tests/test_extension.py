@@ -57,11 +57,32 @@ class TestExtension:
         assert (pg._psycopg2_connection == 1)
 
     def test_teardown_connection(self, app, db):
-        with create_pgevents(app) as pg:
-            pg._teardown_connection()
+        pg = PGEvents(app)
 
-            assert (pg._psycopg2_connection is None)
-            assert (pg._connection is None)
+        pg._teardown_connection()
+
+        assert (pg._psycopg2_connection is None)
+        assert (pg._connection is None)
+
+        # Set to False so that teardown() isn't called as part of cleanup
+        pg._initialized = False
+
+    def teardown_not_initialized(self):
+        pg = PGEvents()
+
+        pg._psycopg2_connection = 1
+
+        pg.teardown()
+
+        assert (pg._psycopg2_connection == 1)
+
+    def test_teardown(self, app, db):
+        pg = PGEvents(app)
+
+        pg.teardown()
+
+        assert (pg._psycopg2_connection is None)
+        assert (pg._connection is None)
 
     def test_get_full_table_name_default_schema(self, app, db):
         class Widget(db.Model):

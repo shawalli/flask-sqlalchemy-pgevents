@@ -51,6 +51,13 @@ class PGEvents:
 
         self._initialized = True
 
+        atexit.register(self.teardown)
+
+    def teardown(self):
+        if self._initialized:
+            self._teardown_connection()
+        self._initialized = False
+
     def listen(self, target, identifiers, fn):
         installed = False
         identifiers = set(identifiers)
@@ -82,8 +89,6 @@ class PGEvents:
             self._connection = flask_sqlalchemy.db.engine.connect()
             connection_proxy = self._connection.connection
             self._psycopg2_connection = connection_proxy.connection
-
-        atexit.register(self._teardown_connection)
 
     def _teardown_connection(self):
         if self._connection is not None:
