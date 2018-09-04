@@ -63,31 +63,6 @@ class PGEvents:
             self._teardown_connection()
         self._initialized = False
 
-    def listen(self, target, identifiers, fn):
-        installed = False
-        identifiers = set(identifiers)
-
-        if not identifiers:
-            raise ValueError('At least one identifier must be provided')
-
-        invalid_identifiers = identifiers.difference(IDENTIFIERS)
-        if invalid_identifiers:
-            raise ValueError('Invalid identifiers: {}'.format(list(invalid_identifiers)))
-
-        if self._initialized:
-            self._install_trigger_for_model(target)
-            installed = True
-
-        trigger_name = self._get_full_table_name(target)
-
-        self._triggers[trigger_name].append(Trigger(target, fn, identifiers, installed))
-
-    def listens_for(self, target, identifiers):
-        def decorate(fn):
-            self.listen(target, identifiers, fn)
-            return fn
-        return decorate
-
     def _setup_conection(self):
         with self._app.app_context():
             flask_sqlalchemy = self._app.extensions['sqlalchemy']
@@ -116,19 +91,44 @@ class PGEvents:
 
         install_trigger(self._psycopg2_connection, table_name, schema=schema_name)
 
-    def notify(self, timeout=0.0):
+    def listen(self, target, identifiers, fn):
+        installed = False
+        identifiers = set(identifiers)
+
+        if not identifiers:
+            raise ValueError('At least one identifier must be provided')
+
+        invalid_identifiers = identifiers.difference(IDENTIFIERS)
+        if invalid_identifiers:
+            raise ValueError('Invalid identifiers: {}'.format(list(invalid_identifiers)))
+
+        if self._initialized:
+            self._install_trigger_for_model(target)
+            installed = True
+
+        trigger_name = self._get_full_table_name(target)
+
+        self._triggers[trigger_name].append(Trigger(target, fn, identifiers, installed))
+
+    def listens_for(self, target, identifiers):
+        def decorate(fn):
+            self.listen(target, identifiers, fn)
+            return fn
+        return decorate
+
+    def handle_events(self, timeout=0.0):
         if not self._initialized:
             raise RuntimeError('Extension not initialized.')
 
-        for notification in poll(self._psycopg2_connection, timeout=timeout):
-            table = '{}.{}'.format(notification['schema_name'], notification['table_name'])
+        for event in poll(self._psycopg2_connection, timeout=timeout):
+            table = '{}.{}'.format(event['schema_name'], event['table_name'])
 
             triggers = self._triggers.get(table, [])
             if not triggers:
                 continue
 
             for trigger in triggers:
-                if notification['event'].lower() not in trigger.events:
+                if event['event'].lower() not in trigger.events:
                     continue
 
-                trigger.callback(notification['id'], notification['event'])
+                trigger.callback(event['id'], event['event'])

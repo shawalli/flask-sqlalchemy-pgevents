@@ -348,12 +348,12 @@ class TestApi:
                 trigger_installed_ = trigger_installed(conn, 'gadget', schema='private')
                 assert (trigger_installed_ == True)
 
-    def test_notify_not_initialized(self):
+    def test_handle_events_not_initialized(self):
         with create_pgevents() as pg:
             with raises(RuntimeError):
-                pg.notify()
+                pg.handle_events()
 
-    def test_notify_no_events(self, app, db):
+    def test_handle_events_no_events(self, app, db):
         with create_pgevents(app) as pg:
             class Widget(db.Model):
                 __tablename__ = 'widget'
@@ -368,11 +368,11 @@ class TestApi:
                 nonlocal widget_callback_called
                 widget_callback_called += 1
 
-            pg.notify()
+            pg.handle_events()
 
             assert (widget_callback_called == 0)
 
-    def test_notify_one_table_one_event(self, app, db):
+    def test_handle_events_one_table_one_event(self, app, db):
         with create_pgevents(app) as pg:
             class Widget(db.Model):
                 __tablename__ = 'widget'
@@ -390,11 +390,11 @@ class TestApi:
             db.session.add(Widget())
             db.session.commit()
 
-            pg.notify()
+            pg.handle_events()
 
             assert (widget_callback_called == 1)
 
-    def test_notify_one_table_multiple_events(self, app, db):
+    def test_handle_events_one_table_multiple_events(self, app, db):
         with create_pgevents(app) as pg:
             class Widget(db.Model):
                 __tablename__ = 'widget'
@@ -414,11 +414,11 @@ class TestApi:
             db.session.add(Widget())
             db.session.commit()
 
-            pg.notify()
+            pg.handle_events()
 
             assert (widget_callback_called == 3)
 
-    def test_notify_one_table_multiple_callbacks(self, app, db):
+    def test_handle_events_one_table_multiple_callbacks(self, app, db):
         with create_pgevents(app) as pg:
             class Widget(db.Model):
                 __tablename__ = 'widget'
@@ -448,12 +448,12 @@ class TestApi:
             db.session.add(widget)
             db.session.commit()
 
-            pg.notify()
+            pg.handle_events()
 
             assert(widget_insert_callback_called == 1)
             assert(widget_upsert_callback_called == 2)
 
-    def test_notify_multiple_tables_events(self, app, db):
+    def test_handle_events_multiple_tables_events(self, app, db):
         with create_pgevents(app) as pg:
             class Widget(db.Model):
                 __tablename__ = 'widget'
@@ -486,12 +486,12 @@ class TestApi:
             db.session.add(Gadget())
             db.session.commit()
 
-            pg.notify()
+            pg.handle_events()
 
             assert (widget_callback_called == 1)
             assert (gadget_callback_called == 1)
 
-    def test_notify_no_triggers(self, app, db):
+    def test_handle_events_no_triggers(self, app, db):
         with create_pgevents(app) as pg:
             class Widget(db.Model):
                 __tablename__ = 'widget'
@@ -516,6 +516,6 @@ class TestApi:
             db.session.add(Gadget())
             db.session.commit()
 
-            pg.notify()
+            pg.handle_events()
 
             assert (widget_callback_called == 0)
