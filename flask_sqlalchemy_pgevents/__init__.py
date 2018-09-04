@@ -4,7 +4,8 @@ from collections import defaultdict, namedtuple
 from typing import Callable, List, Set
 import atexit
 
-from psycopg2_pgevents import install_trigger, install_trigger_function, poll
+from psycopg2_pgevents import install_trigger, install_trigger_function, poll, register_event_channel, \
+    unregister_event_channel
 import attr
 
 IDENTIFIERS = set(('insert', 'update', 'delete'))
@@ -47,6 +48,8 @@ class PGEvents:
                     self._install_trigger_for_model(trigger.target)
                     trigger.installed = True
 
+        register_event_channel(self._psycopg2_connection)
+
         app.extensions['pgevents'] = self
 
         self._initialized = True
@@ -55,6 +58,8 @@ class PGEvents:
 
     def teardown(self):
         if self._initialized:
+            unregister_event_channel(self._psycopg2_connection)
+
             self._teardown_connection()
         self._initialized = False
 
@@ -111,23 +116,19 @@ class PGEvents:
 
         install_trigger(self._psycopg2_connection, table_name, schema=schema_name)
 
-# TODO:???
+    def notify(self, timeout=0.0):
+        if not self._initialized:
+            raise RuntimeError('Extension not initialized.')
 
+        for notification in poll(self._psycopg2_connection, timeout=timeout):
+            table = '{}.{}'.format(notification['schema_name'], notification['table_name'])
 
-# def notify(self):
-#     if not self._initialized:
-#         raise RuntimeError('Extension not initialized.')
+            triggers = self._triggers.get(table, [])
+            if not triggers:
+                continue
 
-#     for notification in poll(self._psycopg2_connection):
-#         table = '{}.{}'.format(notification['schema_name'], notification['table_name'])
+            for trigger in triggers:
+                if notification['event'].lower() not in trigger.events:
+                    continue
 
-#         triggers = self._triggers.get(table, [])
-#         if not triggers:
-#             continue
-
-#         for trigger in triggers:
-#             if notification['event'].lower() not in trigger.events:
-#                 continue
-
-#         fn = notification['fn']
-#         fn(notification['id'], notification['event'])
+                trigger.fn(notification['id'], notification['event'])
