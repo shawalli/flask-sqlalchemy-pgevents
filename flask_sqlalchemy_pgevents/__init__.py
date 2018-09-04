@@ -14,7 +14,7 @@ IDENTIFIERS = set(('insert', 'update', 'delete'))
 @attr.s(auto_attribs=True)
 class Trigger:
     target: Callable
-    fn: Callable
+    callback: Callable
     events: Set = set()
     installed: bool = False
 
@@ -131,4 +131,4 @@ class PGEvents:
                 if notification['event'].lower() not in trigger.events:
                     continue
 
-                trigger.fn(notification['id'], notification['event'])
+                trigger.callback(notification['id'], notification['event'])

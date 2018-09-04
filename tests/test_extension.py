@@ -132,11 +132,11 @@ class TestExtension:
 
         create_all(db)
 
-        def event_handler(record_id, identifier):
+        def callback(record_id, identifier):
             pass
         with create_pgevents(app) as pg:
             with raises(ValueError):
-                pg.listen(Widget, [], event_handler)
+                pg.listen(Widget, [], callback)
 
             assert ('public.widget' not in pg._triggers)
 
@@ -147,11 +147,11 @@ class TestExtension:
 
         create_all(db)
 
-        def event_handler(record_id, identifier):
+        def callback(record_id, identifier):
             pass
         with create_pgevents(app) as pg:
             with raises(ValueError):
-                pg.listen(Widget, ['insert', 'upsert'], event_handler)
+                pg.listen(Widget, ['insert', 'upsert'], callback)
 
             assert ('public.widget' not in pg._triggers)
 
@@ -162,11 +162,11 @@ class TestExtension:
 
         create_all(db)
 
-        def event_handler(record_id, identifier):
+        def callback(record_id, identifier):
             pass
 
         with create_pgevents() as pg:
-            pg.listen(Widget, ['insert'], event_handler)
+            pg.listen(Widget, ['insert'], callback)
 
             assert ('public.widget' in pg._triggers)
             assert (len(pg._triggers['public.widget']) == 1)
@@ -174,7 +174,7 @@ class TestExtension:
             assert (trigger.installed == False)
             assert (trigger.target == Widget)
             assert (trigger.events == {'insert'})
-            assert (trigger.fn == event_handler)
+            assert (trigger.callback == callback)
 
             with create_connection(db, raw=True) as conn:
                 trigger_installed_ = trigger_installed(conn, 'widget')
@@ -187,11 +187,11 @@ class TestExtension:
 
         create_all(db)
 
-        def event_handler(record_id, identifier):
+        def callback(record_id, identifier):
             pass
 
         with create_pgevents(app) as pg:
-            pg.listen(Widget, ['insert'], event_handler)
+            pg.listen(Widget, ['insert'], callback)
 
             assert ('public.widget' in pg._triggers)
             assert (len(pg._triggers['public.widget']) == 1)
@@ -199,7 +199,7 @@ class TestExtension:
             assert (trigger.installed == True)
             assert (trigger.target == Widget)
             assert (trigger.events == {'insert'})
-            assert (trigger.fn == event_handler)
+            assert (trigger.callback == callback)
 
             with create_connection(db, raw=True) as conn:
                 trigger_installed_ = trigger_installed(conn, 'widget')
@@ -212,15 +212,15 @@ class TestExtension:
 
         create_all(db)
 
-        def event_handler1(record_id, identifier):
+        def upsert_callback(record_id, identifier):
             pass
 
-        def event_handler2(record_id, identifier):
+        def delete_callback(record_id, identifier):
             pass
 
         with create_pgevents(app) as pg:
-            pg.listen(Widget, ['insert', 'update'], event_handler1)
-            pg.listen(Widget, ['delete'], event_handler2)
+            pg.listen(Widget, ['insert', 'update'], upsert_callback)
+            pg.listen(Widget, ['delete'], delete_callback)
 
             assert ('public.widget' in pg._triggers)
             assert (len(pg._triggers['public.widget']) == 2)
@@ -229,13 +229,13 @@ class TestExtension:
             assert (trigger.installed == True)
             assert (trigger.target == Widget)
             assert (trigger.events == {'insert', 'update'})
-            assert (trigger.fn == event_handler1)
+            assert (trigger.callback == upsert_callback)
 
             trigger = pg._triggers['public.widget'][1]
             assert (trigger.installed == True)
             assert (trigger.target == Widget)
             assert (trigger.events == {'delete'})
-            assert (trigger.fn == event_handler2)
+            assert (trigger.callback == delete_callback)
 
             with create_connection(db, raw=True) as conn:
                 trigger_installed_ = trigger_installed(conn, 'widget')
@@ -256,15 +256,15 @@ class TestExtension:
 
         create_all(db)
 
-        def widget_event_handler(record_id, identifier):
+        def widget_callback(record_id, identifier):
             pass
 
-        def gadget_event_handler(record_id, identifier):
+        def gadget_callback(record_id, identifier):
             pass
 
         with create_pgevents(app) as pg:
-            pg.listen(Widget, ['insert'], widget_event_handler)
-            pg.listen(Gadget, ['delete'], gadget_event_handler)
+            pg.listen(Widget, ['insert'], widget_callback)
+            pg.listen(Gadget, ['delete'], gadget_callback)
 
             assert ('public.widget' in pg._triggers)
             assert (len(pg._triggers['public.widget']) == 1)
@@ -273,7 +273,7 @@ class TestExtension:
             assert (trigger.installed == True)
             assert (trigger.target == Widget)
             assert (trigger.events == {'insert'})
-            assert (trigger.fn == widget_event_handler)
+            assert (trigger.callback == widget_callback)
 
             assert ('private.gadget' in pg._triggers)
             assert (len(pg._triggers['private.gadget']) == 1)
@@ -282,7 +282,7 @@ class TestExtension:
             assert (trigger.installed == True)
             assert (trigger.target == Gadget)
             assert (trigger.events == {'delete'})
-            assert (trigger.fn == gadget_event_handler)
+            assert (trigger.callback == gadget_callback)
 
             with create_connection(db, raw=True) as conn:
                 trigger_installed_ = trigger_installed(conn, 'widget')
@@ -306,14 +306,14 @@ class TestExtension:
 
         create_all(db)
 
-        def widget_event_handler(record_id, identifier):
+        def widget_callback(record_id, identifier):
             pass
 
-        def gadget_event_handler(record_id, identifier):
+        def gadget_callback(record_id, identifier):
             pass
 
         with create_pgevents() as pg:
-            pg.listen(Widget, ['insert'], widget_event_handler)
+            pg.listen(Widget, ['insert'], widget_callback)
 
             assert ('public.widget' in pg._triggers)
             assert (len(pg._triggers['public.widget']) == 1)
@@ -322,7 +322,7 @@ class TestExtension:
             assert (widget_trigger.installed == False)
             assert (widget_trigger.target == Widget)
             assert (widget_trigger.events == {'insert'})
-            assert (widget_trigger.fn == widget_event_handler)
+            assert (widget_trigger.callback == widget_callback)
 
             with create_connection(db, raw=True) as conn:
                 trigger_installed_ = trigger_installed(conn, 'widget')
@@ -336,7 +336,7 @@ class TestExtension:
                 trigger_installed_ = trigger_installed(conn, 'widget')
                 assert (trigger_installed_ == True)
 
-            pg.listen(Gadget, ['delete'], gadget_event_handler)
+            pg.listen(Gadget, ['delete'], gadget_callback)
 
             assert ('private.gadget' in pg._triggers)
             assert (len(pg._triggers['private.gadget']) == 1)
@@ -345,7 +345,7 @@ class TestExtension:
             assert (trigger.installed == True)
             assert (trigger.target == Gadget)
             assert (trigger.events == {'delete'})
-            assert (trigger.fn == gadget_event_handler)
+            assert (trigger.callback == gadget_callback)
 
             with create_connection(db, raw=True) as conn:
                 trigger_installed_ = trigger_installed(conn, 'gadget', schema='private')
@@ -358,11 +358,11 @@ class TestExtension:
 
         create_all(db)
 
-        def event_handler(record_id, identifier):
+        def callback(record_id, identifier):
             pass
 
         with create_pgevents() as pg:
-            pg.listen(Widget, ['insert'], event_handler)
+            pg.listen(Widget, ['insert'], callback)
 
             assert ('public.widget' in pg._triggers)
             assert (len(pg._triggers['public.widget']) == 1)
@@ -370,7 +370,7 @@ class TestExtension:
             assert (trigger.installed == False)
             assert (trigger.target == Widget)
             assert (trigger.events == {'insert'})
-            assert (trigger.fn == event_handler)
+            assert (trigger.callback == callback)
 
             with create_connection(db, raw=True) as conn:
                 trigger_installed_ = trigger_installed(conn, 'widget')
@@ -393,7 +393,7 @@ class TestExtension:
             create_all(db)
 
             @pg.listens_for(Widget, ['insert'])
-            def event_handler(record_id, identifier):
+            def callback(record_id, identifier):
                 pass
 
             assert ('public.widget' in pg._triggers)
@@ -402,7 +402,7 @@ class TestExtension:
             assert (trigger.installed == False)
             assert (trigger.target == Widget)
             assert (trigger.events == {'insert'})
-            assert (trigger.fn == event_handler)
+            assert (trigger.callback == callback)
 
             with create_connection(db, raw=True) as conn:
                 trigger_installed_ = trigger_installed(conn, 'widget')
@@ -425,7 +425,7 @@ class TestExtension:
             create_all(db)
 
             @pg.listens_for(Widget, ['insert'])
-            def event_handler(record_id, identifier):
+            def callback(record_id, identifier):
                 pass
 
             assert ('public.widget' in pg._triggers)
@@ -434,7 +434,7 @@ class TestExtension:
             assert (trigger.installed == True)
             assert (trigger.target == Widget)
             assert (trigger.events == {'insert'})
-            assert (trigger.fn == event_handler)
+            assert (trigger.callback == callback)
 
             with create_connection(db, raw=True) as conn:
                 trigger_installed_ = trigger_installed(conn, 'widget')
@@ -457,7 +457,7 @@ class TestExtension:
             create_all(db)
 
             @pg.listens_for(Widget, ['insert'])
-            def widget_event_handler(record_id, identifier):
+            def widget_callback(record_id, identifier):
                 pass
 
             assert ('public.widget' in pg._triggers)
@@ -466,7 +466,7 @@ class TestExtension:
             assert (trigger.installed == False)
             assert (trigger.target == Widget)
             assert (trigger.events == {'insert'})
-            assert (trigger.fn == widget_event_handler)
+            assert (trigger.callback == widget_callback)
 
             with create_connection(db, raw=True) as conn:
                 trigger_installed_ = trigger_installed(conn, 'widget')
@@ -481,7 +481,7 @@ class TestExtension:
                 assert (trigger_installed_ == True)
 
             @pg.listens_for(Gadget, ['delete'])
-            def gadget_event_handler(record_id, identifier):
+            def gadget_callback(record_id, identifier):
                 pass
 
             assert ('private.gadget' in pg._triggers)
@@ -491,7 +491,7 @@ class TestExtension:
             assert (trigger.installed == True)
             assert (trigger.target == Gadget)
             assert (trigger.events == {'delete'})
-            assert (trigger.fn == gadget_event_handler)
+            assert (trigger.callback == gadget_callback)
 
             with create_connection(db, raw=True) as conn:
                 trigger_installed_ = trigger_installed(conn, 'gadget', schema='private')
@@ -510,16 +510,16 @@ class TestExtension:
 
             create_all(db)
 
-            widget_handler_called = 0
+            widget_callback_called = 0
 
             @pg.listens_for(Widget, ['insert'])
-            def widget_event_handler(record_id, identifier):
-                nonlocal widget_handler_called
-                widget_handler_called += 1
+            def widget_callback(record_id, identifier):
+                nonlocal widget_callback_called
+                widget_callback_called += 1
 
             pg.notify()
 
-            assert (widget_handler_called == 0)
+            assert (widget_callback_called == 0)
 
     def test_notify_one_table_one_event(self, app, db):
         with create_pgevents(app) as pg:
@@ -529,19 +529,19 @@ class TestExtension:
 
             create_all(db)
 
-            widget_handler_called = 0
+            widget_callback_called = 0
 
             @pg.listens_for(Widget, ['insert'])
-            def widget_event_handler(record_id, identifier):
-                nonlocal widget_handler_called
-                widget_handler_called += 1
+            def widget_callback(record_id, identifier):
+                nonlocal widget_callback_called
+                widget_callback_called += 1
 
             db.session.add(Widget())
             db.session.commit()
 
             pg.notify()
 
-            assert (widget_handler_called == 1)
+            assert (widget_callback_called == 1)
 
     def test_notify_one_table_multiple_events(self, app, db):
         with create_pgevents(app) as pg:
@@ -551,12 +551,12 @@ class TestExtension:
 
             create_all(db)
 
-            widget_handler_called = 0
+            widget_callback_called = 0
 
             @pg.listens_for(Widget, ['insert'])
-            def widget_event_handler(record_id, identifier):
-                nonlocal widget_handler_called
-                widget_handler_called += 1
+            def widget_callback(record_id, identifier):
+                nonlocal widget_callback_called
+                widget_callback_called += 1
 
             db.session.add(Widget())
             db.session.add(Widget())
@@ -565,9 +565,9 @@ class TestExtension:
 
             pg.notify()
 
-            assert (widget_handler_called == 3)
+            assert (widget_callback_called == 3)
 
-    def test_notify_one_table_multiple_handlers(self, app, db):
+    def test_notify_one_table_multiple_callbacks(self, app, db):
         with create_pgevents(app) as pg:
             class Widget(db.Model):
                 __tablename__ = 'widget'
@@ -576,18 +576,18 @@ class TestExtension:
 
             create_all(db)
 
-            widget_insert_handler_called = 0
-            widget_upsert_handler_called = 0
+            widget_insert_callback_called = 0
+            widget_upsert_callback_called = 0
 
             @pg.listens_for(Widget, ['insert'])
-            def widget_insert_handler(record_id, identifier):
-                nonlocal widget_insert_handler_called
-                widget_insert_handler_called += 1
+            def widget_insert_callback(record_id, identifier):
+                nonlocal widget_insert_callback_called
+                widget_insert_callback_called += 1
 
             @pg.listens_for(Widget, ['insert', 'update'])
-            def widget_upsert_handler(record_id, identifier):
-                nonlocal widget_upsert_handler_called
-                widget_upsert_handler_called += 1
+            def widget_upsert_callback(record_id, identifier):
+                nonlocal widget_upsert_callback_called
+                widget_upsert_callback_called += 1
 
             widget = Widget(label='foo')
             db.session.add(widget)
@@ -599,8 +599,8 @@ class TestExtension:
 
             pg.notify()
 
-            assert(widget_insert_handler_called == 1)
-            assert(widget_upsert_handler_called == 2)
+            assert(widget_insert_callback_called == 1)
+            assert(widget_upsert_callback_called == 2)
 
     def test_notify_multiple_tables_events(self, app, db):
         with create_pgevents(app) as pg:
@@ -618,18 +618,18 @@ class TestExtension:
 
             create_all(db)
 
-            widget_handler_called = 0
-            gadget_handler_called = 0
+            widget_callback_called = 0
+            gadget_callback_called = 0
 
             @pg.listens_for(Widget, ['insert'])
-            def widget_event_handler(record_id, identifier):
-                nonlocal widget_handler_called
-                widget_handler_called += 1
+            def widget_callback(record_id, identifier):
+                nonlocal widget_callback_called
+                widget_callback_called += 1
 
             @pg.listens_for(Gadget, ['insert'])
-            def gadget_event_handler(record_id, identifier):
-                nonlocal gadget_handler_called
-                gadget_handler_called += 1
+            def gadget_callback(record_id, identifier):
+                nonlocal gadget_callback_called
+                gadget_callback_called += 1
 
             db.session.add(Widget())
             db.session.add(Gadget())
@@ -637,8 +637,8 @@ class TestExtension:
 
             pg.notify()
 
-            assert (widget_handler_called == 1)
-            assert (gadget_handler_called == 1)
+            assert (widget_callback_called == 1)
+            assert (gadget_callback_called == 1)
 
     def test_notify_no_triggers(self, app, db):
         with create_pgevents(app) as pg:
@@ -656,15 +656,15 @@ class TestExtension:
 
             create_all(db)
 
-            widget_handler_called = 0
+            widget_callback_called = 0
 
-            def widget_event_handler(record_id, identifier):
-                nonlocal widget_handler_called
-                widget_handler_called += 1
+            def widget_callback(record_id, identifier):
+                nonlocal widget_callback_called
+                widget_callback_called += 1
 
             db.session.add(Gadget())
             db.session.commit()
 
             pg.notify()
 
-            assert (widget_handler_called == 0)
+            assert (widget_callback_called == 0)
