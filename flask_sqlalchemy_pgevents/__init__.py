@@ -127,14 +127,14 @@ class PGEvents:
             raise RuntimeError('Extension not initialized.')
 
         for event in poll(self._psycopg2_connection, timeout=timeout):
-            table = '{}.{}'.format(event['schema_name'], event['table_name'])
+            table = '{}.{}'.format(event.schema_name, event.table_name)
 
             triggers = self._triggers.get(table, [])
             if not triggers:
                 continue
 
             for trigger in triggers:
-                if event['event'].lower() not in trigger.events:
+                if event.type.lower() not in trigger.events:
                     continue
 
-                trigger.callback(event['id'], event['event'])
+                trigger.callback(event.row_id, event.type)
