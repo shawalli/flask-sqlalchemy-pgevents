@@ -15,11 +15,15 @@ setup(
     author_email=about['__email__'],
     url=about['__uri__'],
     license=about['__license__'],
+    packages=['flask_sqlalchemy_pgevents'],
     zip_safe=False,
     platforms='any',
     install_requires=[
-        'psycopg2>=2.7.5',
-        'SQLAlchemy>=1.0'
+        'Flask>=1.0.2',
+        'Flask-SQLAlchemy>=2.3.2',
+        'psycopg2-binary>=2.7.5',
+        # TODO: add psycopg2-pgevents once it is publishws
+
     ],
     tests_require=[
         'pytest',
