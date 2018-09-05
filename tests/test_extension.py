@@ -131,7 +131,7 @@ class TestExtension:
 
         create_all(db)
 
-        def callback(record_id, identifier):
+        def callback(row_id, identifier):
             pass
 
         with create_pgevents() as pg:
