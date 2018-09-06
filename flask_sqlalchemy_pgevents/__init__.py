@@ -44,10 +44,11 @@ class PGEvents:
             raise RuntimeError(
                 'This extension must be initialized after Flask-SQLAlchemy')
 
+        self._setup_conection()
+
+        # Initialize psycopg2-pgevents
         pgevents_debug = app.config.get('PSYCOPG2_PGEVENTS_DEBUG', False)
         set_debug(pgevents_debug)
-
-        self._setup_conection()
 
         install_trigger_function(self._psycopg2_connection)
 
