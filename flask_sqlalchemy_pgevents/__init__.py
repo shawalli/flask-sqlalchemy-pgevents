@@ -8,7 +8,7 @@ from flask import Flask
 from flask_sqlalchemy.model import Model
 from psycopg2.extensions import connection as Psycopg2Connection
 from psycopg2_pgevents import install_trigger, install_trigger_function, poll, register_event_channel, \
-    unregister_event_channel
+    set_debug, unregister_event_channel
 from sqlalchemy.engine.base import Connection as SQLAlchemyConnection
 import attr
 
@@ -43,6 +43,9 @@ class PGEvents:
         if 'sqlalchemy' not in app.extensions:
             raise RuntimeError(
                 'This extension must be initialized after Flask-SQLAlchemy')
+
+        pgevents_debug = app.config.get('PSYCOPG2_PGEVENTS_DEBUG', False)
+        set_debug(pgevents_debug)
 
         self._setup_conection()
 
