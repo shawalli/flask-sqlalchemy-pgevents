@@ -141,4 +141,4 @@ class PGEvents:
                 if event.type.lower() not in trigger.events:
                     continue
 
-                trigger.callback(event.row_id, event.type)
+                trigger.callback(event.id, event.row_id, event.type)

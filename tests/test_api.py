@@ -364,7 +364,7 @@ class TestApi:
             widget_callback_called = 0
 
             @pg.listens_for(Widget, {'insert'})
-            def widget_callback(row_id, identifier):
+            def widget_callback(event_id, row_id, identifier):
                 nonlocal widget_callback_called
                 widget_callback_called += 1
 
@@ -383,7 +383,7 @@ class TestApi:
             widget_callback_called = 0
 
             @pg.listens_for(Widget, {'insert'})
-            def widget_callback(row_id, identifier):
+            def widget_callback(event_id, row_id, identifier):
                 nonlocal widget_callback_called
                 widget_callback_called += 1
 
@@ -405,7 +405,7 @@ class TestApi:
             widget_callback_called = 0
 
             @pg.listens_for(Widget, {'insert'})
-            def widget_callback(row_id, identifier):
+            def widget_callback(event_id, row_id, identifier):
                 nonlocal widget_callback_called
                 widget_callback_called += 1
 
@@ -431,12 +431,12 @@ class TestApi:
             widget_upsert_callback_called = 0
 
             @pg.listens_for(Widget, {'insert'})
-            def widget_insert_callback(row_id, identifier):
+            def widget_insert_callback(event_id, row_id, identifier):
                 nonlocal widget_insert_callback_called
                 widget_insert_callback_called += 1
 
             @pg.listens_for(Widget, {'insert', 'update'})
-            def widget_upsert_callback(row_id, identifier):
+            def widget_upsert_callback(event_id, row_id, identifier):
                 nonlocal widget_upsert_callback_called
                 widget_upsert_callback_called += 1
 
@@ -473,12 +473,12 @@ class TestApi:
             gadget_callback_called = 0
 
             @pg.listens_for(Widget, {'insert'})
-            def widget_callback(row_id, identifier):
+            def widget_callback(event_id, row_id, identifier):
                 nonlocal widget_callback_called
                 widget_callback_called += 1
 
             @pg.listens_for(Gadget, {'insert'})
-            def gadget_callback(row_id, identifier):
+            def gadget_callback(event_id, row_id, identifier):
                 nonlocal gadget_callback_called
                 gadget_callback_called += 1
 
@@ -509,7 +509,7 @@ class TestApi:
 
             widget_callback_called = 0
 
-            def widget_callback(row_id, identifier):
+            def widget_callback(event_id, row_id, identifier):
                 nonlocal widget_callback_called
                 widget_callback_called += 1
 
