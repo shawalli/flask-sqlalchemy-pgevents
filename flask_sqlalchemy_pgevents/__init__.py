@@ -1,3 +1,4 @@
+"""This module manages the Flask-SQLAlchemy-PGEvents extension. """
 __all__ = ['PGEvents']
 
 from collections import defaultdict, namedtuple
@@ -20,6 +21,19 @@ IDENTIFIERS = {'insert', 'update', 'delete'}
 
 @attr.s(auto_attribs=True)
 class Trigger:
+    """Dataclass for PGEvent triggers.
+
+    Attributes
+    ----------
+    target: Callable
+        SQLAlchemy model class for which to listen.
+    callback: Callable
+        Method to call when an event matches this trigger.
+    events: set
+        Event or events that this trigger should listen for.
+    installed:
+        Whether or not the trigger is installed.
+    """
     target: Callable
     callback: Callable
     events: Set = set()
@@ -27,7 +41,17 @@ class Trigger:
 
 
 class PGEvents:
+    """PGEvents extension."""
+
     def __init__(self, app: Optional[Flask]=None) -> None:
+        """Initialize the extension.
+
+        Parameters
+        ----------
+        app: Flask, optional
+            The application to which this extension will be registered.
+
+        """
         self._app = None  # type: Optional[Flask]
         self._connection = None  # type: Optional[SQLAlchemyConnection]
         self._psycopg2_connection = None  # type: Optional[Psycopg2Connection]
@@ -38,6 +62,18 @@ class PGEvents:
             self.init_app(app)
 
     def init_app(self, app: Flask) -> None:
+        """Initialize the extension against an application.
+
+        Parameters
+        ----------
+        app: Flask
+            The application to which this extension will be registered.
+
+        Returns
+        -------
+        None
+
+        """
         self._app = app
 
         if 'sqlalchemy' not in app.extensions:
@@ -68,6 +104,13 @@ class PGEvents:
         atexit.register(self.teardown)
 
     def teardown(self) -> None:
+        """Teardown the extension.
+
+        Returns
+        -------
+        None
+
+        """
         if self._initialized:
             unregister_event_channel(self._psycopg2_connection)
 
@@ -75,6 +118,13 @@ class PGEvents:
         self._initialized = False
 
     def _setup_conection(self) -> None:
+        """Set up the database connection.
+
+        Returns
+        -------
+        None
+
+        """
         with self._app.app_context():  # type: ignore
             flask_sqlalchemy = self._app.extensions['sqlalchemy']  # type: ignore
             self._connection = flask_sqlalchemy.db.engine.connect()
@@ -82,6 +132,13 @@ class PGEvents:
             self._psycopg2_connection = connection_proxy.connection
 
     def _teardown_connection(self) -> None:
+        """Teardown the database connection.
+
+        Returns
+        -------
+        None
+
+        """
         if self._connection is not None:
             with self._app.app_context():  # type: ignore
                 self._psycopg2_connection = None
@@ -90,6 +147,19 @@ class PGEvents:
 
     @staticmethod
     def _get_full_table_name(model: Model) -> str:
+        """Parse the SQLAlchemy model for the fully-resolved table name.
+
+        Parameters
+        ----------
+        model: flask_sqlalchemy.model.Model
+            Model whose name should be resolved.
+
+        Returns
+        -------
+        str
+            Fully-resolved table name, in the form "<SCHEMA>.<TABLE>".
+
+        """
         table_args = getattr(model, '__table_args__', {})
         schema_name = table_args.get('schema', 'public')
         table_name = model.__tablename__
@@ -97,12 +167,44 @@ class PGEvents:
         return '{schema}.{table}'.format(schema=schema_name, table=table_name)
 
     def _install_trigger_for_model(self, model: Model) -> None:
+        """Install a trigger for the given model.
+
+        Parameters
+        ----------
+        model: flask_sqlalchemy.model.Model
+            Model to which a trigger should be installed.
+
+        Returns
+        -------
+        None
+
+        """
         table = self._get_full_table_name(model)
         (schema_name, table_name) = table.split('.')
 
         install_trigger(self._psycopg2_connection, table_name, schema=schema_name)
 
     def listen(self, target: Model, identifiers: Set, fn: Callable) -> None:
+        """Listen to PGEvents events for a given model.
+
+        This method's signature mirrors the `sqlalchemy.event.listen` method for
+        consistency.
+
+        Parameters
+        ----------
+        target: flask_sqlalchemy.model.Model
+            SQLAlchemy model class for which to listen.
+        identifiers: set
+            Event or events that this trigger should listen for. Should be one
+            of "insert", "update", or "delete".
+        fn: Callable
+            Method to call when an event matches this trigger.
+
+        Returns
+        -------
+        None
+
+        """
         installed = False
 
         if not identifiers:
@@ -121,12 +223,50 @@ class PGEvents:
         self._triggers[trigger_name].append(Trigger(target, fn, identifiers, installed))
 
     def listens_for(self, target: Model, identifiers: Set) -> Callable:
+        """Decorate a function as a callback for one or several PGEvents events.
+
+        This method's signature mirrors the `sqlalchemy.event.listen` method for
+        consistency.
+
+        Parameters
+        ----------
+        target: flask_sqlalchemy.model.Model
+            SQLAlchemy model class for which to listen.
+        identifiers: set
+            Event or events that this trigger should listen for. Should be one
+            of "insert", "update", or "delete".
+        fn: Callable
+            Method to call when an event matches this trigger.
+
+        Returns
+        -------
+        None
+
+        """
         def decorate(fn):
             self.listen(target, identifiers, fn)
             return fn
         return decorate
 
     def handle_events(self, timeout: float=0.0) -> None:
+        """Handle PGEvents events, according to registered triggers.
+
+        Parameters
+        ----------
+        timeout: float
+            Number of seconds to block when polling for events. A value of 0.0
+            sets the method as non-blocking.
+
+        Raises
+        ------
+        RuntimeError
+            Raises if the extension has not yet been initialized.
+
+        Returns
+        -------
+        None
+
+        """
         if not self._initialized:
             raise RuntimeError('Extension not initialized.')
 
