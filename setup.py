@@ -22,8 +22,7 @@ setup(
         'Flask>=1.0.2',
         'Flask-SQLAlchemy>=2.3.2',
         'psycopg2-binary>=2.7.5',
-        # TODO: add psycopg2-pgevents once it is publishws
-
+        'psycopg2-pgevents==0.1.0'
     ],
     tests_require=[
         'pytest',
@@ -35,10 +34,8 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Database',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Utilities',
