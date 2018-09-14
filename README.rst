@@ -1,7 +1,7 @@
-Flask-SQLAlchemy-pgevents
+Flask-SQLAlchemy-PGEvents
 =========================
 
-Flask-SQLAlchemy-pgevents provides PostGreSQL eventing for Flask. It handles
+Flask-SQLAlchemy-PGEvents provides PostGreSQL eventing for Flask. It handles
 setting up the underlying database, registering triggers, and polling for
 events.
 

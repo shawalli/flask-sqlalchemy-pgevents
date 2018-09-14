@@ -1,6 +1,6 @@
 """This module contains information about this package."""
-__title__ = 'Flask-SQLAlchemy-pgevents'
-__summary__ = 'Flask extension for psycopg2-pgevents, via SQLAlchemy.'
+__title__ = 'Flask-SQLAlchemy-PGEvents'
+__summary__ = 'Flask extension for psycopg2-pgevents, using SQLAlchemy.'
 __uri__ = 'https://github.com/shawalli/flask-sqlalchemy-pgevents'
 
 __version__ = '0.1.0'

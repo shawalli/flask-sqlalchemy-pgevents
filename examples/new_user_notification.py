@@ -1,4 +1,4 @@
-"""This single-file app demonstrates how to use Flask-SQLAlchemy-pgevents to
+"""This single-file app demonstrates how to use Flask-SQLAlchemy-PGEvents to
 listen for new user-accounts output them to the console.
 
 Requirements (at time of creation):
@@ -7,7 +7,7 @@ attrs==18.2.0
 click==6.7
 Flask==1.0.2
 Flask-SQLAlchemy==2.3.2
-Flask-SQLAlchemy-pgevents==0.1.0
+Flask-SQLAlchemy-PGEvents==0.1.0
 gevent==1.3.6
 greenlet==0.4.14
 gunicorn==19.9.0
@@ -54,7 +54,7 @@ class Config:
         to False if it is not explicitly needed, as the feature has a side
         effect of slowing down transactions.
     PSYCOPG2_PGEVENTS_DEBUG: bool, optional
-        Whether or not to print debug logs for psycopg2-pgevents module.
+        Whether or not to print debug logs for psycopg2-pgevents package.
     """
     SECRET_KEY: str = environ.get(
         'SECRET_KEY',
@@ -191,7 +191,7 @@ class Event(DB.Model):
 
 @HUEY.task(crontab(minute='*'))
 def pgevents_task() -> None:
-    """Handle Pgevent events. Runs every minute, via Mini-Huey.
+    """Handle PGEvent events. Runs every minute, via Mini-Huey.
 
     Returns
     -------
