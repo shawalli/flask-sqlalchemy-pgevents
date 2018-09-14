@@ -1,13 +1,18 @@
+from os import environ
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from pytest import fixture
 from sqlalchemy import MetaData
 from sqlalchemy.sql import compiler
 
+DATABASE_BASE_URL = environ.get('TEST_DATABASE_BASE_URL', 'postgres://')
+TEST_DATABASE_DSN = '/'.join([DATABASE_BASE_URL, 'test'])
+
 
 class Config:
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2:///test'
+    SQLALCHEMY_DATABASE_URI = TEST_DATABASE_DSN
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
@@ -26,7 +31,8 @@ def app(request):
         Test Flask application
 
     """
-    print(type(request))
+    print(DATABASE_BASE_URL)
+    print(TEST_DATABASE_DSN)
     app = Flask(request.module.__name__)
 
     app.config.from_object(Config)
