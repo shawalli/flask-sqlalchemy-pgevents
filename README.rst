@@ -39,8 +39,7 @@ use `Flask-SQLAlchemy <https://github.com/mitsuhiko/flask-sqlalchemy>`_. To
 provide a consistent SQLAlchemy experience, this extension's event listener
 decorator is designed to closely resemble SQLAlchemy event listener decorators.
 
-.. note::
-
+Note
     While this extension may appear to integrate with SQLAlchemy's event
     listeners, it actually sits alongside that eventing structure. Registering
     a PGEvents event listener does not register the event listener with
