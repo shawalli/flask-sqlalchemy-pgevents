@@ -1,12 +1,14 @@
+#########################
 Flask-SQLAlchemy-PGEvents
-=========================
+#########################
 
 Flask-SQLAlchemy-PGEvents provides PostGreSQL eventing for Flask. It handles
 setting up the underlying database, registering triggers, and polling for
 events.
 
+**************
 Why Do I Care?
---------------
+**************
 
    *I have SQLAlchemy, which supports event listeners. Why do I care about this
    extension?*
@@ -24,8 +26,9 @@ With this extension, an application may be notified of events at the
 this extension and registered event listeners (for the affected table) are
 called.
 
+*******************
 Why Use SQLAlchemy?
--------------------
+*******************
 
     *You just said that SQLAlchemy has nothing to do with the eventing aspect
     of this extension...So why are you using SQLAlchemy?*
@@ -45,12 +48,15 @@ Note
     a PGEvents event listener does not register the event listener with
     SQLAlchemy's ``event`` registrar.
 
+********
 Examples
---------
+********
+
 See the ``examples`` directory for example use cases for this package.
 
+************
 Future Plans
-------------
+************
 
 * With a little bit of work, it should be possible to completely integrate this
   extension's event listeners into ``SQLAlchemy.event``, so that event listeners
@@ -61,13 +67,18 @@ Future Plans
   extension to support other `SQLAlchemy mapper events
   <http://docs.sqlalchemy.org/en/latest/orm/events.html#mapper-events>`_.
 
+**********
 References
-----------
+**********
 
 * `psycopg2-pgevents <https://github.com/shawalli/psycopg2-pgevents>`_
+
 * `SQLAlchemy <https://bitbucket.org/zzzeek/sqlalchemy>`_
+
 * `Flask-SQLAlchemy <https://github.com/mitsuhiko/flask-sqlalchemy>`_
 
+**********************
 Authorship and License
-----------------------
+**********************
+
 Written by Shawn Wallis and distributed under the MIT license.
