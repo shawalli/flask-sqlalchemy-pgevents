@@ -13,6 +13,20 @@ class Config:
 
 @fixture
 def app(request):
+    """Create Flask application test fixture.
+
+    Parameters
+    ----------
+    request: _pytest.fixtures.FixtureRequest
+        Gives information about the test to this fixture. Provided by pytest.
+
+    Yields
+    ------
+    Flask
+        Test Flask application
+
+    """
+    print(type(request))
     app = Flask(request.module.__name__)
 
     app.config.from_object(Config)
@@ -28,7 +42,19 @@ def app(request):
 
 @fixture
 def db(app):
-    """Session-wide test database."""
+    """Empty test database and create database controller.
+
+    Parameters
+    ----------
+    app: Flask
+        Test Flask application to which the extension should be registered.
+
+    Returns
+    -------
+    flask_sqlalchemy.SQLAlchemy
+        Flask-SQLAlchemy database controller
+
+    """
     db_ = SQLAlchemy()
     db_.init_app(app)
 
@@ -52,12 +78,13 @@ def patched_visit_create_schema(self_, create):
     -------
     str
         DDL statement
+
     """
     schema = self_.preparer.format_schema(create.element)
     return "CREATE SCHEMA IF NOT EXISTS " + schema
 
 
-# THis method must be monkey-patched since SQLAlchemy does not natively support
+# This method must be monkey-patched since SQLAlchemy does not natively support
 # IF EXISTS/IF NOT EXISTS modifers on DDL (as of 1.2.11). Since some tests test
 # against non-default schema, and schema are not dropped as part of drop_all(),
 # this monkey-patch allows for existing schema with the same name.
