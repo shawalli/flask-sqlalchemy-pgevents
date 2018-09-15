@@ -37,6 +37,7 @@ common_postgres: &common_postgres
     POSTGRES_DB: test
     POSTGRES_USER: root
     POSTGRES_PASSWORD: ""
+
 #
 # Jobs
 #
