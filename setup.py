@@ -28,7 +28,7 @@ setup(
         'Flask>=1.0.2',
         'Flask-SQLAlchemy>=2.3.2',
         'psycopg2-binary>=2.7.5',
-        'psycopg2-pgevents==0.1.0'
+        'psycopg2-pgevents==0.1.1'
     ],
     tests_require=[
         'pytest',
