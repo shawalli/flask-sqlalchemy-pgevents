@@ -7,12 +7,13 @@ from sqlalchemy import MetaData
 from sqlalchemy.sql import compiler
 
 DATABASE_BASE_URL = environ.get('TEST_DATABASE_BASE_URL', 'postgres://')
-TEST_DATABASE_DSN = '/'.join([DATABASE_BASE_URL, 'test'])
+DATABASE = environ.get('TEST_DATABASE', 'postgres')
+DATABASE_DSN = '/'.join([DATABASE_BASE_URL, DATABASE])
 
 
 class Config:
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = TEST_DATABASE_DSN
+    SQLALCHEMY_DATABASE_URI = DATABASE_DSN
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
@@ -31,8 +32,6 @@ def app(request):
         Test Flask application
 
     """
-    print(DATABASE_BASE_URL)
-    print(TEST_DATABASE_DSN)
     app = Flask(request.module.__name__)
 
     app.config.from_object(Config)

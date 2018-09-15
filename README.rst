@@ -2,6 +2,8 @@
 Flask-SQLAlchemy-PGEvents
 #########################
 
+.. image:: https://badge.fury.io/py/flask-sqlalchemy-pgevents.svg
+    :target: https://badge.fury.io/py/flask-sqlalchemy-pgevents
 .. image:: https://circleci.com/gh/shawalli/flask-sqlalchemy-pgevents.svg?style=svg
     :target: https://circleci.com/gh/shawalli/flask-sqlalchemy-pgevents
 .. image:: https://coveralls.io/repos/github/shawalli/flask-sqlalchemy-pgevents/badge.svg?branch=master
