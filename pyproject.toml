@@ -1,0 +1,62 @@
+[tool.poetry]
+name = "flask-sqlalchemy-pgevents"
+version = "0.2.0"
+description = "Flask extension for psycopg2-pgevents, using SQLAlchemy."
+readme = "README.rst"
+homepage = "https://github.com/shawalli/lask-sqlalchemy-pgevents"
+repository = "https://github.com/shawalli/lask-sqlalchemy-pgevents"
+authors = ["Shawn Wallis <shawn.p.wallis@gmail.com>"]
+license = "MIT"
+classifiers = [
+    'Development Status :: 3 - Alpha',
+    'Environment :: Web Environment',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Topic :: Database',
+    'Topic :: Software Development :: Libraries :: Python Modules',
+    'Topic :: Utilities',
+]
+include = [
+    "LICENSE.txt",
+]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+github-webhook = "^1.0.2"
+attr = "^0.3.1"
+flask = "^1.1.2"
+flask-sqlalchemy = "^2.4.4"
+psycopg2-binary = "^2.8.5"
+psycopg2-pgevents = "^0.2.1"
+
+[tool.poetry.dev-dependencies]
+coveralls = "^2.1.1"
+pre-commit = "^2.6.0"
+pytest = "^5.4.3"
+pytest-cov = "^2.10.0"
+
+[tool.black]
+line-length = 120
+target-version = ["py36", "py37", "py38"]
+include = "\\.pyi?$"
+exclude = """
+/(
+    \\.eggs
+  | \\.git
+  | \\.hg
+  | \\.mypy_cache
+  | \\.tox
+  | \\.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+"""
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

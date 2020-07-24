@@ -1,17 +1,15 @@
 #########################
-Flask-SQLAlchemy-PGEvents
+flask-sqlalchemy-pgevents
 #########################
 
-.. image:: https://badge.fury.io/py/Flask-SQLAlchemy-PGEvents.svg
-    :target: https://badge.fury.io/py/Flask-SQLAlchemy-PGEvents
-.. image:: https://circleci.com/gh/shawalli/flask-sqlalchemy-pgevents.svg?style=svg
-    :target: https://circleci.com/gh/shawalli/flask-sqlalchemy-pgevents
+.. image:: https://badge.fury.io/py/flask-sqlalchemy-pgevents.svg
+    :target: https://badge.fury.io/py/flask-sqlalchemy-pgevents
 .. image:: https://coveralls.io/repos/github/shawalli/flask-sqlalchemy-pgevents/badge.svg?branch=master
     :target: https://coveralls.io/github/shawalli/flask-sqlalchemy-pgevents?branch=master
 .. image:: https://img.shields.io/badge/License-MIT-yellow.svg
     :target: https://opensource.org/licenses/MIT
 
-Flask-SQLAlchemy-PGEvents provides PostGreSQL eventing for Flask. It handles
+flask-sqlalchemy-pgevents provides PostGreSQL eventing for Flask. It handles
 setting up the underlying database, registering triggers, and polling for
 events.
 

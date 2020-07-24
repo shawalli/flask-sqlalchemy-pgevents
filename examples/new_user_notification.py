@@ -1,4 +1,4 @@
-"""This single-file app demonstrates how to use Flask-SQLAlchemy-PGEvents to
+"""This single-file app demonstrates how to use flask-sqlalchemy-pgevents to
 listen for new user-accounts output them to the console.
 
 Requirements (at time of creation):
@@ -7,7 +7,7 @@ attrs==18.2.0
 click==6.7
 Flask==1.0.2
 Flask-SQLAlchemy==2.3.2
-Flask-SQLAlchemy-PGEvents==0.1.0
+flask-sqlalchemy-pgevents==0.1.0
 gevent==1.3.6
 greenlet==0.4.14
 gunicorn==19.9.0
@@ -25,6 +25,7 @@ Werkzeug==0.14.1
 """
 # Required to be imported and run before anything else
 from gevent import monkey
+
 monkey.patch_all()
 
 from base64 import b64encode
@@ -56,21 +57,13 @@ class Config:
     PSYCOPG2_PGEVENTS_DEBUG: bool, optional
         Whether or not to print debug logs for psycopg2-pgevents package.
     """
-    SECRET_KEY: str = environ.get(
-        'SECRET_KEY',
-        b64encode(urandom(48)).decode('utf-8')
-    )
 
-    SQLALCHEMY_DATABASE_URI: str = environ.get(
-        'DATABASE_URL',
-        'postgres:///postgres'
-    )
+    SECRET_KEY: str = environ.get("SECRET_KEY", b64encode(urandom(48)).decode("utf-8"))
+
+    SQLALCHEMY_DATABASE_URI: str = environ.get("DATABASE_URL", "postgres:///postgres")
     SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
 
-    PSYCOPG2_PGEVENTS_DEBUG: bool = environ.get(
-        'PSYCOPG2_PGEVENTS_DEBUG',
-        False
-    )
+    PSYCOPG2_PGEVENTS_DEBUG: bool = environ.get("PSYCOPG2_PGEVENTS_DEBUG", False)
 
 
 # Create app
@@ -115,7 +108,7 @@ class UserAccount(DB.Model):
         Date and time that the account was created.
     """
 
-    __tablename__ = 'useraccounts'
+    __tablename__ = "useraccounts"
 
     id = DB.Column(DB.Integer, primary_key=True)
     first_name = DB.Column(DB.Text, nullable=False)
@@ -135,10 +128,7 @@ class UserAccount(DB.Model):
         str
             Full name of user account.
         """
-        return '{fname} {lname}'.format(
-            fname=self.first_name,
-            lname=self.last_name
-        )
+        return "{fname} {lname}".format(fname=self.first_name, lname=self.last_name)
 
     def __repr__(self) -> str:
         """Represent this instance as a string.
@@ -148,14 +138,8 @@ class UserAccount(DB.Model):
         str
             User account represented as a string.
         """
-        return (
-            '<UserAccount {uname}, {email}: '
-            'name:{name} active:{active}>'
-        ).format(
-            uname=self.username,
-            email=self.email,
-            name=self.full_name,
-            active=self.active
+        return ("<UserAccount {uname}, {email}: " "name:{name} active:{active}>").format(
+            uname=self.username, email=self.email, name=self.full_name, active=self.active
         )
 
 
@@ -178,7 +162,8 @@ class Event(DB.Model):
     event_id: UUIDType
         Pgevent event UUID.
     """
-    __tablename__ = 'events'
+
+    __tablename__ = "events"
 
     id = DB.Column(DB.Integer, primary_key=True)
     event_id = DB.Column(UUIDType, nullable=False, unique=True)
@@ -189,7 +174,7 @@ class Event(DB.Model):
 #
 
 
-@HUEY.task(crontab(minute='*'))
+@HUEY.task(crontab(minute="*"))
 def pgevents_task() -> None:
     """Handle PGEvent events. Runs every minute, via Mini-Huey.
 
@@ -239,9 +224,8 @@ def claim_event(event_id: UUID) -> bool:
 #
 
 
-@PG.listens_for(UserAccount, {'insert'})
-def useraccount_event_listener(event_id: UUID, row_id: str,
-                               identifier: str) -> None:
+@PG.listens_for(UserAccount, {"insert"})
+def useraccount_event_listener(event_id: UUID, row_id: str, identifier: str) -> None:
     """Handle UserAccount inserts.
 
     This event listener prints a message to the console whenever someone signs
@@ -261,7 +245,7 @@ def useraccount_event_listener(event_id: UUID, row_id: str,
     """
     with APP.app_context():
         acct = UserAccount.query.filter_by(id=row_id).first()
-        print('New user account created!!! {}'.format(acct))
+        print("New user account created!!! {}".format(acct))
 
 
 #

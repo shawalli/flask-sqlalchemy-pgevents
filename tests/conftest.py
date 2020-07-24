@@ -6,9 +6,9 @@ from pytest import fixture
 from sqlalchemy import MetaData
 from sqlalchemy.sql import compiler
 
-DATABASE_BASE_URL = environ.get('TEST_DATABASE_BASE_URL', 'postgres://')
-DATABASE = environ.get('TEST_DATABASE', 'postgres')
-DATABASE_DSN = '/'.join([DATABASE_BASE_URL, DATABASE])
+DATABASE_BASE_URL = environ.get("TEST_DATABASE_BASE_URL", "postgres://")
+DATABASE = environ.get("TEST_DATABASE", "postgres")
+DATABASE_DSN = "/".join([DATABASE_BASE_URL, DATABASE])
 
 
 class Config:
